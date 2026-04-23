@@ -1,0 +1,83 @@
+2026-04-23 19:41:41,893 [ERROR] 未捕获异常:
+Traceback (most recent call last):
+  File "C:\SimControl\src\main.py", line 41, in <module>
+    main()
+  File "C:\SimControl\src\main.py", line 33, in main
+    from ui.main_window import MainWindow
+  File "C:\SimControl\src\ui\main_window.py", line 18, in <module>
+    from ui.plot_widget import PlotWidget
+  File "C:\SimControl\src\ui\plot_widget.py", line 2, in <module>
+    import pyqtgraph as pg
+ModuleNotFoundError: No module named 'pyqtgraph'
+
+2026-04-23 20:57:41,172 [ERROR] 未捕获异常:
+Traceback (most recent call last):
+  File "src\main.py", line 41, in <module>
+    main()
+  File "src\main.py", line 28, in main
+    from user.login_window import LoginWindow
+  File "C:\SimControl\src\user\login_window.py", line 9, in <module>
+    from user.user_manager import UserManager
+  File "C:\SimControl\src\user\user_manager.py", line 2, in <module>
+    from user.user_data import UserDataManager
+  File "C:\SimControl\src\user\user_data.py", line 26, in <module>
+    class UserDataManager:
+  File "C:\SimControl\src\user\user_data.py", line 52, in UserDataManager
+    def get_user(self, user_id: str) -> dict | None:
+TypeError: unsupported operand type(s) for |: 'type' and 'NoneType'
+
+2026-04-23 20:58:49,588 [ERROR] 未捕获异常:
+Traceback (most recent call last):
+  File "src\main.py", line 41, in <module>
+    main()
+  File "src\main.py", line 28, in main
+    from user.login_window import LoginWindow
+  File "C:\SimControl\src\user\login_window.py", line 9, in <module>
+    from user.user_manager import UserManager
+  File "C:\SimControl\src\user\user_manager.py", line 2, in <module>
+    from user.user_data import UserDataManager
+  File "C:\SimControl\src\user\user_data.py", line 26, in <module>
+    class UserDataManager:
+  File "C:\SimControl\src\user\user_data.py", line 52, in UserDataManager
+    def get_user(self, user_id: str) -> dict | None:
+TypeError: unsupported operand type(s) for |: 'type' and 'NoneType'
+
+2026-04-23 21:02:08,722 [ERROR] 未捕获异常:
+Traceback (most recent call last):
+  File "src\main.py", line 41, in <module>
+    main()
+  File "src\main.py", line 28, in main
+    from user.login_window import LoginWindow
+  File "C:\SimControl\src\user\login_window.py", line 9, in <module>
+    from user.user_manager import UserManager
+  File "C:\SimControl\src\user\user_manager.py", line 6, in <module>
+    class UserManager:
+  File "C:\SimControl\src\user\user_manager.py", line 12, in UserManager
+    def login(self, user_id: str, password: str) -> tuple[bool, str, str]:
+TypeError: 'type' object is not subscriptable
+
+2026-04-23 21:03:40,467 [ERROR] 未捕获异常:
+Traceback (most recent call last):
+  File "src\main.py", line 41, in <module>
+    main()
+  File "src\main.py", line 28, in main
+    from user.login_window import LoginWindow
+  File "C:\SimControl\src\user\login_window.py", line 9, in <module>
+    from user.user_manager import UserManager
+  File "C:\SimControl\src\user\user_manager.py", line 2
+    from __future__ import annotations
+                                     ^
+SyntaxError: future feature annotations is not defined
+
+2026-04-23 21:05:53,606 [ERROR] 未捕获异常:
+Traceback (most recent call last):
+  File "src\main.py", line 41, in <module>
+    main()
+  File "src\main.py", line 33, in main
+    from ui.main_window import MainWindow
+  File "C:\SimControl\src\ui\main_window.py", line 16, in <module>
+    from ui.plot_widget import PlotWidget
+  File "C:\SimControl\src\ui\plot_widget.py", line 2, in <module>
+    import pyqtgraph as pg
+ModuleNotFoundError: No module named 'pyqtgraph'
+
