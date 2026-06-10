@@ -1,5 +1,6 @@
 """Excel导出功能"""
 from typing import List, Dict, Tuple
+import xml.parsers.expat  # PyInstaller 需要显式看到此导入，否则打包后会缺失 expat
 
 
 def export_to_excel(data: List[Dict], file_path: str) -> Tuple[bool, str]:
@@ -9,8 +10,8 @@ def export_to_excel(data: List[Dict], file_path: str) -> Tuple[bool, str]:
     """
     try:
         import openpyxl
-    except ImportError:
-        return False, '缺少openpyxl库，请运行: pip install openpyxl'
+    except ImportError as e:
+        return False, f'缺少openpyxl库或其依赖，请运行: pip install openpyxl。详细错误: {e}'
 
     try:
         wb = openpyxl.Workbook()

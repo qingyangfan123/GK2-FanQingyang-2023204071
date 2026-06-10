@@ -26,6 +26,7 @@ class PIDParamGroup(QGroupBox):
         layout.addRow('Ti：', self._ti)
         layout.addRow('Td：', self._td)
         apply_btn = QPushButton('应用参数')
+        apply_btn.setStyleSheet('QPushButton{background-color:#ffffff;color:#334155;border:1px solid #cbd5e1;border-radius:6px;padding:6px 16px;font-size:13px;font-weight:500;min-height:32px;}QPushButton:hover{background-color:#f8fafc;border:1px solid #94a3b8;}QPushButton:pressed{background-color:#f1f5f9;}QPushButton:disabled{background-color:#f1f5f9;color:#94a3b8;border:1px solid #e2e8f0;}')
         apply_btn.clicked.connect(self._emit)
         layout.addRow('', apply_btn)
 

@@ -27,7 +27,9 @@ class PlotWidget(QWidget):
 
         pg.setConfigOptions(antialias=True, background='w', foreground='k')
         self._plot = pg.PlotWidget(title='实时仿真波形')
-        self._plot.addLegend(offset=(10, 10))
+        self._plot.setStyleSheet('border: 1px solid #e2e8f0; border-radius: 8px;')
+        self._legend = self._plot.addLegend(offset=(10, 10))
+        self._legend.setLabelTextSize('11pt')
         self._plot.showGrid(x=True, y=True, alpha=0.3)
         self._plot.setLabel('left', '幅值')
         self._plot.setLabel('bottom', '时间 (s)')
@@ -72,6 +74,18 @@ class PlotWidget(QWidget):
 
     def set_paused(self, paused):
         self._paused = paused
+
+    def set_max_points(self, n: int) -> None:
+        """动态调整显示点数，保留最近 n 个数据"""
+        if n <= 0:
+            return
+        self._max = n
+        self._t = deque(self._t, maxlen=n)
+        self._sv = deque(self._sv, maxlen=n)
+        self._pv = deque(self._pv, maxlen=n)
+        self._u = deque(self._u, maxlen=n)
+        self._d = deque(self._d, maxlen=n)
+        self._e = deque(self._e, maxlen=n)
 
 
 class HistoryPlotWidget(QWidget):

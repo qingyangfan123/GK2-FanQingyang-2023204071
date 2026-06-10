@@ -5,12 +5,23 @@ from PyQt5.QtWidgets import (
     QFormLayout, QGroupBox, QHeaderView, QInputDialog
 )
 from user.user_manager import UserManager
-from config import UserRole
+from user.permission import current_user
+from config import UserRole, Permissions
 
 
 class UserManagerWindow(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
+
+        # 权限拦截：仅管理员可进入
+        if not current_user.is_admin:
+            QMessageBox.warning(
+                self, '权限不足',
+                '您没有权限进入用户管理界面'
+            )
+            self.reject()
+            return
+
         self._manager = UserManager()
         self.setWindowTitle('用户管理')
         self.setMinimumSize(600, 420)

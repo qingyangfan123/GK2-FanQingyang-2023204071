@@ -81,3 +81,43 @@ Traceback (most recent call last):
     import pyqtgraph as pg
 ModuleNotFoundError: No module named 'pyqtgraph'
 
+2026-06-02 17:50:44,726 [ERROR] 未捕获异常:
+Traceback (most recent call last):
+  File "C:\SimControl\src\ui\main_window.py", line 371, in _open_history
+    win = HistoryWindow(self)
+  File "C:\SimControl\src\ui\history_window.py", line 21, in __init__
+    self._setup_ui()
+  File "C:\SimControl\src\ui\history_window.py", line 43, in _setup_ui
+    self._t_start = QLineEdit()
+NameError: name 'QLineEdit' is not defined
+
+2026-06-02 17:50:50,548 [ERROR] 未捕获异常:
+Traceback (most recent call last):
+  File "C:\SimControl\src\ui\main_window.py", line 371, in _open_history
+    win = HistoryWindow(self)
+  File "C:\SimControl\src\ui\history_window.py", line 21, in __init__
+    self._setup_ui()
+  File "C:\SimControl\src\ui\history_window.py", line 43, in _setup_ui
+    self._t_start = QLineEdit()
+NameError: name 'QLineEdit' is not defined
+
+2026-06-02 17:50:53,205 [ERROR] 未捕获异常:
+Traceback (most recent call last):
+  File "C:\SimControl\src\ui\main_window.py", line 371, in _open_history
+    win = HistoryWindow(self)
+  File "C:\SimControl\src\ui\history_window.py", line 21, in __init__
+    self._setup_ui()
+  File "C:\SimControl\src\ui\history_window.py", line 43, in _setup_ui
+    self._t_start = QLineEdit()
+NameError: name 'QLineEdit' is not defined
+
+2026-06-02 17:51:20,642 [ERROR] 未捕获异常:
+Traceback (most recent call last):
+  File "C:\SimControl\src\ui\main_window.py", line 371, in _open_history
+    win = HistoryWindow(self)
+  File "C:\SimControl\src\ui\history_window.py", line 21, in __init__
+    self._setup_ui()
+  File "C:\SimControl\src\ui\history_window.py", line 43, in _setup_ui
+    self._t_start = QLineEdit()
+NameError: name 'QLineEdit' is not defined
+

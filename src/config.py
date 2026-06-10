@@ -6,6 +6,16 @@ import sys
 def get_base_path() -> str:
     """获取程序根目录（兼容开发和打包环境）"""
     if getattr(sys, 'frozen', False):
+        # PyInstaller 单文件模式会把资源解压到临时目录 sys._MEIPASS
+        if hasattr(sys, '_MEIPASS'):
+            return sys._MEIPASS
+        return os.path.dirname(sys.executable)
+    return os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+
+def get_app_dir() -> str:
+    """获取程序持久化数据目录（exe所在目录或项目根目录）"""
+    if getattr(sys, 'frozen', False):
         return os.path.dirname(sys.executable)
     return os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -13,7 +23,8 @@ def get_base_path() -> str:
 class Paths:
     """路径配置"""
     BASE = get_base_path()
-    DATA = os.path.join(BASE, 'data')
+    APP_DIR = get_app_dir()
+    DATA = os.path.join(APP_DIR, 'data')
     HISTORY = os.path.join(DATA, 'history_data')
     USERS = os.path.join(DATA, 'users')
     LOGS = os.path.join(DATA, 'logs')

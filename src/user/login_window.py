@@ -18,19 +18,16 @@ class LoginWindow(QDialog):
 
     def _setup_ui(self):
         self.setWindowTitle('PID温度控制仿真系统 - 登录')
-        self.setFixedSize(380, 260)
+        self.setFixedSize(440, 340)
         self.setWindowFlags(Qt.Dialog | Qt.WindowCloseButtonHint)
 
         root = QVBoxLayout(self)
-        root.setContentsMargins(40, 30, 40, 30)
-        root.setSpacing(16)
+        root.setContentsMargins(48, 40, 48, 40)
+        root.setSpacing(20)
 
         title = QLabel('PID 温度控制仿真系统')
         title.setAlignment(Qt.AlignCenter)
-        f = QFont()
-        f.setPointSize(14)
-        f.setBold(True)
-        title.setFont(f)
+        title.setStyleSheet('font-size: 22px; color: #1e293b; font-weight: bold;')
         root.addWidget(title)
 
         sep = QFrame()
@@ -38,7 +35,8 @@ class LoginWindow(QDialog):
         root.addWidget(sep)
 
         form = QFormLayout()
-        form.setSpacing(10)
+        form.setSpacing(14)
+        form.setLabelAlignment(Qt.AlignLeft)
         self._id_edit = QLineEdit()
         self._id_edit.setPlaceholderText('请输入用户ID')
         self._id_edit.setText('admin')
@@ -51,11 +49,12 @@ class LoginWindow(QDialog):
         root.addLayout(form)
 
         btn_row = QHBoxLayout()
+        btn_row.setSpacing(16)
         self._login_btn = QPushButton('登 录')
         self._login_btn.setDefault(True)
-        self._login_btn.setMinimumHeight(36)
+        self._login_btn.setMinimumHeight(40)
         quit_btn = QPushButton('退 出')
-        quit_btn.setMinimumHeight(36)
+        quit_btn.setMinimumHeight(40)
         btn_row.addWidget(self._login_btn)
         btn_row.addWidget(quit_btn)
         root.addLayout(btn_row)

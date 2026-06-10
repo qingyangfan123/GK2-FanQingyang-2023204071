@@ -3,7 +3,7 @@ from PyQt5.QtWidgets import (
     QMainWindow, QWidget, QHBoxLayout, QVBoxLayout,
     QGroupBox, QFormLayout, QLabel, QLineEdit, QComboBox,
     QPushButton, QCheckBox, QSplitter, QMessageBox,
-    QStatusBar, QMenuBar, QMenu, QAction
+    QStatusBar, QMenuBar, QMenu, QAction, QScrollArea
 )
 from PyQt5.QtCore import Qt, QTimer
 
@@ -41,6 +41,7 @@ class MainWindow(QMainWindow):
         self._u = 0.0
         self._d = 0.0
         self._inner_pv = 0.0
+        self._plant_with_dist = 0.0
 
         self._timer = QTimer(self)
         self._timer.setInterval(int(TempConfig.DT * 1000))
@@ -96,21 +97,26 @@ class MainWindow(QMainWindow):
 
         splitter = QSplitter(Qt.Horizontal)
 
+        left_scroll = QScrollArea()
+        left_scroll.setWidgetResizable(True)
+        left_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        left_scroll.setFixedWidth(400)
+
         left_panel = self._build_left_panel()
-        splitter.addWidget(left_panel)
+        left_scroll.setWidget(left_panel)
+        splitter.addWidget(left_scroll)
 
         self._plot = PlotWidget()
         splitter.addWidget(self._plot)
         splitter.setStretchFactor(1, 3)
-        splitter.setSizes([340, 860])
+        splitter.setSizes([400, 800])
 
         main_layout.addWidget(splitter)
 
     def _build_left_panel(self):
         panel = QWidget()
-        panel.setMaximumWidth(340)
         layout = QVBoxLayout(panel)
-        layout.setSpacing(8)
+        layout.setSpacing(12)
 
         # ---- 仿真控制 ----
         sim_group = QGroupBox('仿真控制')
@@ -136,6 +142,7 @@ class MainWindow(QMainWindow):
         btn_row = QHBoxLayout()
         self._start_btn = QPushButton('开始仿真')
         self._stop_btn = QPushButton('停止仿真')
+        self._stop_btn.setObjectName('stopBtn')
         self._stop_btn.setEnabled(False)
         btn_row.addWidget(self._start_btn)
         btn_row.addWidget(self._stop_btn)
@@ -143,6 +150,16 @@ class MainWindow(QMainWindow):
         self._pause_btn.setEnabled(False)
         sim_layout.addLayout(btn_row)
         sim_layout.addWidget(self._pause_btn)
+
+        display_row = QHBoxLayout()
+        display_row.addWidget(QLabel('显示点数：'))
+        self._display_edit = QLineEdit(str(TempConfig.DISPLAY_POINTS))
+        display_row.addWidget(self._display_edit)
+        apply_display_btn = QPushButton('应用显示')
+        apply_display_btn.setStyleSheet('QPushButton{background-color:#ffffff;color:#334155;border:1px solid #cbd5e1;border-radius:6px;padding:6px 16px;font-size:13px;font-weight:500;min-height:32px;}QPushButton:hover{background-color:#f8fafc;border:1px solid #94a3b8;}QPushButton:pressed{background-color:#f1f5f9;}QPushButton:disabled{background-color:#f1f5f9;color:#94a3b8;border:1px solid #e2e8f0;}')
+        apply_display_btn.clicked.connect(self._apply_display_points)
+        display_row.addWidget(apply_display_btn)
+        sim_layout.addLayout(display_row)
 
         self._start_btn.clicked.connect(self._start_sim)
         self._stop_btn.clicked.connect(self._stop_sim)
@@ -152,11 +169,19 @@ class MainWindow(QMainWindow):
         # ---- 控制策略 ----
         strategy_group = QGroupBox('控制策略')
         sg_layout = QVBoxLayout(strategy_group)
-        self._strategy_combo = QComboBox()
+
+        class NoWheelComboBox(QComboBox):
+            def wheelEvent(self, event):
+                event.ignore()
+
+        self._strategy_combo = NoWheelComboBox()
         for k, v in ControlStrategy.NAMES.items():
             self._strategy_combo.addItem(v, k)
         self._strategy_combo.currentIndexChanged.connect(self._on_strategy_changed)
         sg_layout.addWidget(self._strategy_combo)
+
+        self._limit_label = QLabel('限幅范围：无限制')
+        sg_layout.addWidget(self._limit_label)
         layout.addWidget(strategy_group)
 
         # ---- PID参数 ----
@@ -184,6 +209,7 @@ class MainWindow(QMainWindow):
         mg_layout.addRow('T₂：', self._t2_edit)
         mg_layout.addRow('增益：', self._gain_edit)
         apply_model_btn = QPushButton('应用模型参数')
+        apply_model_btn.setStyleSheet('QPushButton{background-color:#ffffff;color:#334155;border:1px solid #cbd5e1;border-radius:6px;padding:6px 16px;font-size:13px;font-weight:500;min-height:32px;}QPushButton:hover{background-color:#f8fafc;border:1px solid #94a3b8;}QPushButton:pressed{background-color:#f1f5f9;}QPushButton:disabled{background-color:#f1f5f9;color:#94a3b8;border:1px solid #e2e8f0;}')
         apply_model_btn.clicked.connect(self._apply_model_params)
         mg_layout.addRow('', apply_model_btn)
         layout.addWidget(model_group)
@@ -191,9 +217,10 @@ class MainWindow(QMainWindow):
         # ---- 干扰 ----
         dist_group = QGroupBox('干扰信号')
         dg_layout = QFormLayout(dist_group)
-        self._dist_amp_edit = QLineEdit('5')
+        self._dist_amp_edit = QLineEdit('0')
         self._dist_dur_edit = QLineEdit('10')
         self._dist_btn = QPushButton('施加方波干扰')
+        self._dist_btn.setStyleSheet('QPushButton{background-color:#ffffff;color:#334155;border:1px solid #cbd5e1;border-radius:6px;padding:6px 16px;font-size:13px;font-weight:500;min-height:32px;}QPushButton:hover{background-color:#f8fafc;border:1px solid #94a3b8;}QPushButton:pressed{background-color:#f1f5f9;}QPushButton:disabled{background-color:#f1f5f9;color:#94a3b8;border:1px solid #e2e8f0;}')
         self._dist_countdown_label = QLabel('')
         dg_layout.addRow('振幅：', self._dist_amp_edit)
         dg_layout.addRow('持续时间(s)：', self._dist_dur_edit)
@@ -234,12 +261,12 @@ class MainWindow(QMainWindow):
                 pv=self._pv,
                 inner_pv=self._inner_pv,
                 disturbance=self._d,
-                outer_pv=self._pv,
+                outer_pv=self._plant_with_dist,
             )
 
             self._inner_pv, plant_out = self._model.step(self._u)
-            plant_with_dist = plant_out + self._d
-            self._pv = self._feedback.step(plant_with_dist)
+            self._plant_with_dist = plant_out + self._d
+            self._pv = self._feedback.step(self._plant_with_dist)
 
             self._pv_label.setText(f'{self._pv:.4f}')
             self._u_label.setText(f'{self._u:.4f}')
@@ -277,6 +304,7 @@ class MainWindow(QMainWindow):
         self._inner_pv = 0.0
         self._u = 0.0
         self._d = 0.0
+        self._plant_with_dist = 0.0
         self._running = True
         self._timer.start()
         self._start_btn.setEnabled(False)
@@ -301,6 +329,9 @@ class MainWindow(QMainWindow):
         self._pause_btn.setText('继续显示' if self._paused_display else '暂停显示')
 
     def _toggle_manual(self, checked):
+        if checked:
+            # 切换到手动：让手动输出框自动跟踪当前控制量，实现无冲击
+            self._manual_edit.setText(f'{self._u:.4f}')
         self._manual_edit.setEnabled(checked)
         self._ctrl.set_manual_mode(checked, current_output=self._u, inner_pv=self._inner_pv)
         self.statusBar().showMessage(f'已切换至{"手动" if checked else "自动"}模式')
@@ -314,6 +345,17 @@ class MainWindow(QMainWindow):
         self._disturbance.apply(amp, dur)
         self._dist_btn.setEnabled(False)
 
+    def _apply_display_points(self):
+        try:
+            n = int(self._display_edit.text())
+            if n <= 0:
+                raise ValueError
+        except ValueError:
+            QMessageBox.warning(self, '参数错误', '显示点数必须是正整数')
+            return
+        self._plot.set_max_points(n)
+        self.statusBar().showMessage(f'显示点数已更新：{n}')
+
     def _on_strategy_changed(self, idx):
         strategy = self._strategy_combo.itemData(idx)
         self._ctrl.set_strategy(strategy)
@@ -326,6 +368,12 @@ class MainWindow(QMainWindow):
         self._pid_group.setVisible(not is_cascade)
         self._outer_group.setVisible(is_cascade)
         self._inner_group.setVisible(is_cascade)
+
+        if s == ControlStrategy.PLAIN_PID:
+            self._limit_label.setText('限幅范围：无限制')
+        else:
+            self._limit_label.setText(
+                f'限幅范围：[{TempConfig.U_MIN}, {TempConfig.U_MAX}]')
 
     def _on_pid_params(self, kp, ti, td):
         self._ctrl.set_pid_params(kp, ti, td)
