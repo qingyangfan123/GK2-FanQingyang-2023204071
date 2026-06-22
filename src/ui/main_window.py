@@ -126,7 +126,11 @@ class MainWindow(QMainWindow):
         self._sv_edit = QLineEdit(str(TempConfig.SV_DEFAULT))
         self._pv_label = QLabel('0.0000')
         self._u_label = QLabel('0.0000')
-        sv_row.addRow('设定值 SV：', self._sv_edit)
+        sv_edit_row = QHBoxLayout()
+        sv_edit_row.addWidget(self._sv_edit)
+        self._sv_range_label = QLabel(f'范围：{TempConfig.SV_MIN} ~ {TempConfig.SV_MAX}')
+        sv_edit_row.addWidget(self._sv_range_label)
+        sv_row.addRow('设定值 SV：', sv_edit_row)
         sv_row.addRow('过程值 PV：', self._pv_label)
         sv_row.addRow('控制量  u：', self._u_label)
         sim_layout.addLayout(sv_row)
@@ -137,7 +141,12 @@ class MainWindow(QMainWindow):
         self._manual_edit.setEnabled(False)
         self._manual_check.toggled.connect(self._toggle_manual)
         sim_layout.addWidget(self._manual_check)
-        sim_layout.addWidget(self._manual_edit)
+
+        manual_row = QHBoxLayout()
+        manual_row.addWidget(self._manual_edit)
+        self._manual_limit_label = QLabel('范围：无限制')
+        manual_row.addWidget(self._manual_limit_label)
+        sim_layout.addLayout(manual_row)
 
         btn_row = QHBoxLayout()
         self._start_btn = QPushButton('开始仿真')
@@ -146,7 +155,7 @@ class MainWindow(QMainWindow):
         self._stop_btn.setEnabled(False)
         btn_row.addWidget(self._start_btn)
         btn_row.addWidget(self._stop_btn)
-        self._pause_btn = QPushButton('暂停显示')
+        self._pause_btn = QPushButton('暂停仿真')
         self._pause_btn.setEnabled(False)
         sim_layout.addLayout(btn_row)
         sim_layout.addWidget(self._pause_btn)
@@ -180,8 +189,24 @@ class MainWindow(QMainWindow):
         self._strategy_combo.currentIndexChanged.connect(self._on_strategy_changed)
         sg_layout.addWidget(self._strategy_combo)
 
-        self._limit_label = QLabel('限幅范围：无限制')
+        self._limit_label = QLabel('输出限幅：无限制')
         sg_layout.addWidget(self._limit_label)
+
+        limit_edit_row = QHBoxLayout()
+        limit_edit_row.addWidget(QLabel('下限'))
+        self._u_min_edit = QLineEdit(str(TempConfig.U_MIN))
+        self._u_min_edit.setFixedWidth(60)
+        limit_edit_row.addWidget(self._u_min_edit)
+        limit_edit_row.addWidget(QLabel('上限'))
+        self._u_max_edit = QLineEdit(str(TempConfig.U_MAX))
+        self._u_max_edit.setFixedWidth(60)
+        limit_edit_row.addWidget(self._u_max_edit)
+        self._apply_limit_btn = QPushButton('应用限幅')
+        self._apply_limit_btn.setStyleSheet('QPushButton{background-color:#ffffff;color:#334155;border:1px solid #cbd5e1;border-radius:6px;padding:6px 16px;font-size:13px;font-weight:500;min-height:32px;}QPushButton:hover{background-color:#f8fafc;border:1px solid #94a3b8;}QPushButton:pressed{background-color:#f1f5f9;}QPushButton:disabled{background-color:#f1f5f9;color:#94a3b8;border:1px solid #e2e8f0;}')
+        self._apply_limit_btn.clicked.connect(self._apply_limits)
+        limit_edit_row.addWidget(self._apply_limit_btn)
+        sg_layout.addLayout(limit_edit_row)
+
         layout.addWidget(strategy_group)
 
         # ---- PID参数 ----
@@ -242,11 +267,17 @@ class MainWindow(QMainWindow):
                 self._sv = sv
 
             if self._ctrl.manual_mode:
+                try:
+                    u_manual = float(self._manual_edit.text())
+                except ValueError:
+                    u_manual = 0.0
                 is_limited = self._ctrl.strategy != ControlStrategy.PLAIN_PID
-                ok2, _, u_manual = validate_manual_output(
-                    self._manual_edit.text(), limited=is_limited)
-                if ok2:
-                    self._ctrl.manual_output = u_manual
+                if is_limited:
+                    u_clamped = max(TempConfig.U_MIN, min(TempConfig.U_MAX, u_manual))
+                    if u_clamped != u_manual:
+                        self._manual_edit.setText(f'{u_clamped:.4f}')
+                    u_manual = u_clamped
+                self._ctrl.manual_output = u_manual
 
             self._d = self._disturbance.step()
             if not self._disturbance.is_active:
@@ -319,14 +350,22 @@ class MainWindow(QMainWindow):
         self._start_btn.setEnabled(True)
         self._stop_btn.setEnabled(False)
         self._pause_btn.setEnabled(False)
-        self._pause_btn.setText('暂停显示')
+        self._pause_btn.setText('暂停仿真')
         self._plot.set_paused(False)
+        self._paused_display = False
         self.statusBar().showMessage('仿真已停止')
 
     def _toggle_pause(self):
         self._paused_display = not self._paused_display
         self._plot.set_paused(self._paused_display)
-        self._pause_btn.setText('继续显示' if self._paused_display else '暂停显示')
+        if self._paused_display:
+            self._timer.stop()
+            self._pause_btn.setText('继续仿真')
+            self.statusBar().showMessage('仿真已暂停')
+        else:
+            self._timer.start()
+            self._pause_btn.setText('暂停仿真')
+            self.statusBar().showMessage('仿真运行中...')
 
     def _toggle_manual(self, checked):
         if checked:
@@ -370,10 +409,24 @@ class MainWindow(QMainWindow):
         self._inner_group.setVisible(is_cascade)
 
         if s == ControlStrategy.PLAIN_PID:
-            self._limit_label.setText('限幅范围：无限制')
+            self._limit_label.setText('输出限幅：无限制')
+            self._u_min_edit.setEnabled(False)
+            self._u_max_edit.setEnabled(False)
+            self._apply_limit_btn.setEnabled(False)
         else:
             self._limit_label.setText(
-                f'限幅范围：[{TempConfig.U_MIN}, {TempConfig.U_MAX}]')
+                f'输出限幅：[{TempConfig.U_MIN}, {TempConfig.U_MAX}]')
+            self._u_min_edit.setEnabled(True)
+            self._u_max_edit.setEnabled(True)
+            self._apply_limit_btn.setEnabled(True)
+        self._update_manual_limit_hint()
+
+    def _update_manual_limit_hint(self):
+        if self._ctrl.strategy == ControlStrategy.PLAIN_PID:
+            self._manual_limit_label.setText('控制量限幅：无限制')
+        else:
+            self._manual_limit_label.setText(
+                f'控制量限幅：[{TempConfig.U_MIN}, {TempConfig.U_MAX}]')
 
     def _on_pid_params(self, kp, ti, td):
         self._ctrl.set_pid_params(kp, ti, td)
@@ -395,6 +448,21 @@ class MainWindow(QMainWindow):
             return
         self._model.set_params(T1, T2, gain)
         self.statusBar().showMessage(f'模型参数已更新：T1={T1} T2={T2} K={gain}')
+
+    def _apply_limits(self):
+        try:
+            u_min = float(self._u_min_edit.text())
+            u_max = float(self._u_max_edit.text())
+        except ValueError:
+            QMessageBox.warning(self, '参数错误', '限幅值必须是数字')
+            return
+        if u_min >= u_max:
+            QMessageBox.warning(self, '参数错误', '下限必须小于上限')
+            return
+        self._ctrl.set_limits(u_min, u_max)
+        self._limit_label.setText(f'输出限幅：[{u_min}, {u_max}]')
+        self._update_manual_limit_hint()
+        self.statusBar().showMessage(f'限幅已更新：[{u_min}, {u_max}]')
 
     # ------------------------------------------------------------------
     # 菜单回调

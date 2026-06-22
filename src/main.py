@@ -17,13 +17,18 @@ def main():
     install_exception_handler()
     _ensure_dirs()
 
-    from PyQt5.QtWidgets import QApplication
+    from PyQt5.QtWidgets import QApplication, QMessageBox
     app = QApplication(sys.argv)
     app.setApplicationName('PID温度控制仿真系统')
 
     if os.path.exists(Paths.STYLE):
-        with open(Paths.STYLE, 'r', encoding='utf-8') as f:
-            app.setStyleSheet(f.read())
+        try:
+            with open(Paths.STYLE, 'r', encoding='utf-8') as f:
+                app.setStyleSheet(f.read())
+        except Exception as e:
+            import logging
+            logging.error(f"加载样式文件失败: {e}")
+            QMessageBox.warning(None, "警告", f"加载样式文件失败，程序将以默认样式运行。\n错误信息: {e}")
 
     from user.login_window import LoginWindow
     login = LoginWindow()

@@ -35,8 +35,15 @@ class SimplePIDController:
         self.td = td
 
     def track_output(self, output: float) -> None:
-        """无限幅版本不需要跟踪"""
-        pass
+        """手动切回自动时让积分跟踪当前输出，实现无扰切换。"""
+        ki = self.kp / self.ti if self.ti > 0 else 0.0
+        if ki != 0:
+            # _prev_error 已在 set_strategy / set_manual_mode 中同步为当前误差
+            current_error = self._prev_error
+            self._integral = (output - self.kp * current_error) / ki
+        else:
+            self._integral = 0.0
+        # 注意：不重置 _prev_error，否则切换后微分项会产生冲击
 
 
 class PIDController:
@@ -87,10 +94,12 @@ class PIDController:
         self.td = td
 
     def track_output(self, output: float) -> None:
-        """手动模式下让积分跟踪当前输出，实现无扰切换"""
+        """手动模式下让积分跟踪当前输出，实现无扰切换。"""
         ki = self.kp / self.ti if self.ti > 0 else 0.0
         if ki != 0:
-            self._integral = output / ki
+            # _prev_error 已在 set_strategy / set_manual_mode 中同步为当前误差
+            current_error = self._prev_error
+            self._integral = (output - self.kp * current_error) / ki
         else:
             self._integral = 0.0
-        self._prev_error = 0.0
+        # 注意：不重置 _prev_error，否则切换后微分项会产生冲击
