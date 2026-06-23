@@ -40,7 +40,8 @@ class SimplePIDController:
         if ki != 0:
             # _prev_error 已在 set_strategy / set_manual_mode 中同步为当前误差
             current_error = self._prev_error
-            self._integral = (output - self.kp * current_error) / ki
+            # 补偿 compute() 下一次调用时会额外累加的 current_error*dt，避免切换瞬间输出跳变
+            self._integral = (output - self.kp * current_error) / ki - current_error * self.dt
         else:
             self._integral = 0.0
         # 注意：不重置 _prev_error，否则切换后微分项会产生冲击
@@ -74,16 +75,17 @@ class PIDController:
         kd = self.kp * self.td
         derivative = (error - self._prev_error) / self.dt if self.dt > 0 else 0.0
 
-        # 计算当前输出（不含积分）
-        output_no_i = self.kp * error + ki * self._integral + kd * derivative
+        p_term = self.kp * error
+        d_term = kd * derivative
+        # 条件积分抗饱和：用 P+D（不含积分）判断
+        pd_term = p_term + d_term
 
-        # 条件积分抗饱和
-        saturated_high = output_no_i > self.u_max and error > 0
-        saturated_low = output_no_i < self.u_min and error < 0
+        saturated_high = pd_term > self.u_max and error > 0
+        saturated_low = pd_term < self.u_min and error < 0
         if not (saturated_high or saturated_low):
             self._integral += error * self.dt
 
-        output = self.kp * error + ki * self._integral + kd * derivative
+        output = p_term + ki * self._integral + d_term
         output = max(self.u_min, min(self.u_max, output))
         self._prev_error = error
         return output
@@ -99,7 +101,8 @@ class PIDController:
         if ki != 0:
             # _prev_error 已在 set_strategy / set_manual_mode 中同步为当前误差
             current_error = self._prev_error
-            self._integral = (output - self.kp * current_error) / ki
+            # 补偿 compute() 下一次调用时会额外累加的 current_error*dt（不饱和前提下）
+            self._integral = (output - self.kp * current_error) / ki - current_error * self.dt
         else:
             self._integral = 0.0
         # 注意：不重置 _prev_error，否则切换后微分项会产生冲击

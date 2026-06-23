@@ -8,10 +8,5 @@
     "password": "e606e38b0d8c19b24cf0ee3808183162ea7cd63ff7912dbb22b5e803286b4446",
     "role": "user",
     "display_name": "普通用户"
-  },
-  "ropz": {
-    "password": "e6e74dd3ee6186117972e679257cce9ce955a99feadb37236e8bd137e1a714ac",
-    "role": "admin",
-    "display_name": "ropz"
   }
 }

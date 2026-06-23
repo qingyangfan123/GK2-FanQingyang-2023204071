@@ -16,6 +16,7 @@ class ControlStrategyManager:
         self.manual_output = 0.0
         self._last_output = 0.0
         self._last_inner_pv = 0.0
+        self._last_inner_sp = 0.0
         self._last_pv = 0.0
         self._last_setpoint = 0.0
         self._last_outer_pv = 0.0
@@ -48,13 +49,13 @@ class ControlStrategyManager:
             self._ff_ctrl.track_output(self._last_output)
         elif strategy == ControlStrategy.CASCADE:
             outer_error = self._last_setpoint - self._last_outer_pv
-            inner_error = self._last_output - self._last_inner_pv
+            inner_error = self._last_inner_sp - self._last_inner_pv
             self._cascade.outer._prev_error = outer_error
             self._cascade.inner._prev_error = inner_error
             self._cascade.track_output(self._last_output, self._last_inner_pv)
         elif strategy == ControlStrategy.CASCADE_FF:
             outer_error = self._last_setpoint - self._last_outer_pv
-            inner_error = self._last_output - self._last_inner_pv
+            inner_error = self._last_inner_sp - self._last_inner_pv
             self._cascade_ff.cascade.outer._prev_error = outer_error
             self._cascade_ff.cascade.inner._prev_error = inner_error
             self._cascade_ff.track_output(self._last_output, self._last_inner_pv)
@@ -81,12 +82,15 @@ class ControlStrategyManager:
                 inner_error = current_output - inner_pv
                 self._cascade.outer._prev_error = outer_error
                 self._cascade.inner._prev_error = inner_error
+                # 手动输出视为内环设定值，同步后再做无扰跟踪
+                self._cascade._last_inner_sp = current_output
                 self._cascade.track_output(current_output, inner_pv)
             elif self.strategy == ControlStrategy.CASCADE_FF:
                 outer_error = self._last_setpoint - self._last_outer_pv
                 inner_error = current_output - inner_pv
                 self._cascade_ff.cascade.outer._prev_error = outer_error
                 self._cascade_ff.cascade.inner._prev_error = inner_error
+                self._cascade_ff.cascade._last_inner_sp = current_output
                 self._cascade_ff.track_output(current_output, inner_pv)
 
     # ------------------------------------------------------------------
@@ -117,8 +121,10 @@ class ControlStrategyManager:
             output = self._ff_ctrl.compute(setpoint, pv, disturbance)
         elif s == ControlStrategy.CASCADE:
             output = self._cascade.compute(setpoint, outer_pv, inner_pv)
+            self._last_inner_sp = self._cascade._last_inner_sp
         elif s == ControlStrategy.CASCADE_FF:
             output = self._cascade_ff.compute(setpoint, outer_pv, inner_pv, disturbance)
+            self._last_inner_sp = self._cascade_ff.cascade._last_inner_sp
         else:
             output = 0.0
 

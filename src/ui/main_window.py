@@ -124,6 +124,7 @@ class MainWindow(QMainWindow):
 
         sv_row = QFormLayout()
         self._sv_edit = QLineEdit(str(TempConfig.SV_DEFAULT))
+        self._sv_edit.editingFinished.connect(self._validate_sv_input)
         self._pv_label = QLabel('0.0000')
         self._u_label = QLabel('0.0000')
         sv_edit_row = QHBoxLayout()
@@ -262,9 +263,12 @@ class MainWindow(QMainWindow):
     # ------------------------------------------------------------------
     def _sim_step(self):
         try:
-            ok, _, sv = validate_sv(self._sv_edit.text())
+            ok, msg, sv = validate_sv(self._sv_edit.text())
             if ok:
                 self._sv = sv
+                self._sv_edit.setStyleSheet('')
+            else:
+                self._sv_edit.setStyleSheet('QLineEdit{border:1px solid red;}')
 
             if self._ctrl.manual_mode:
                 try:
@@ -325,6 +329,12 @@ class MainWindow(QMainWindow):
         if not current_user.has_permission(Permissions.RUN_SIMULATION):
             QMessageBox.warning(self, '权限不足', '您没有运行仿真的权限')
             return
+        ok, msg, sv = validate_sv(self._sv_edit.text())
+        if not ok:
+            QMessageBox.warning(self, '设定值错误', msg)
+            self._sv_edit.setFocus()
+            return
+        self._sv = sv
         self._model.reset()
         self._feedback.reset()
         self._ctrl.reset_all()
@@ -394,6 +404,16 @@ class MainWindow(QMainWindow):
             return
         self._plot.set_max_points(n)
         self.statusBar().showMessage(f'显示点数已更新：{n}')
+
+    def _validate_sv_input(self):
+        ok, msg, sv = validate_sv(self._sv_edit.text())
+        if not ok:
+            QMessageBox.warning(self, '设定值错误', msg)
+            self._sv_edit.setText(str(self._sv))
+            self._sv_edit.setStyleSheet('')
+        else:
+            self._sv = sv
+            self._sv_edit.setStyleSheet('')
 
     def _on_strategy_changed(self, idx):
         strategy = self._strategy_combo.itemData(idx)

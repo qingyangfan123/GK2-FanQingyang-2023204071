@@ -24,6 +24,7 @@ class CascadeController:
             u_max=TempConfig.U_MAX,
             u_min=TempConfig.U_MIN,
         )
+        self._last_inner_sp = 0.0
 
     def reset(self) -> None:
         self.outer.reset()
@@ -36,12 +37,14 @@ class CascadeController:
         inner_pv: 内环反馈（第一惯性环节输出）
         """
         inner_sp = self.outer.compute(setpoint, outer_pv)
+        self._last_inner_sp = inner_sp
         output = self.inner.compute(inner_sp, inner_pv)
         return output
 
     def track_output(self, output: float, inner_pv: float) -> None:
         self.inner.track_output(output)
-        self.outer.track_output(inner_pv)
+        # 外环输出是内环设定值，track_output 应跟踪最近一次的内环设定值
+        self.outer.track_output(self._last_inner_sp)
 
 
 class CascadeWithFeedforward:
