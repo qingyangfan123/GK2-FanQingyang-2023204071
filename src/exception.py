@@ -46,8 +46,8 @@ def show_error_dialog(message: str, title: str = '错误') -> None:
             box.setIcon(QMessageBox.Critical)
             box.setText(message)
             box.exec_()
-    except Exception:
-        pass
+    except Exception as e:
+        logging.error(f'显示错误对话框失败: {e}')
 
 
 def show_info_dialog(message: str, title: str = '提示') -> None:
@@ -59,8 +59,8 @@ def show_info_dialog(message: str, title: str = '提示') -> None:
             box.setIcon(QMessageBox.Information)
             box.setText(message)
             box.exec_()
-    except Exception:
-        pass
+    except Exception as e:
+        logging.error(f'显示提示对话框失败: {e}')
 
 
 def _global_exception_handler(exc_type, exc_value, exc_tb):
@@ -70,8 +70,8 @@ def _global_exception_handler(exc_type, exc_value, exc_tb):
     tb_str = ''.join(traceback.format_exception(exc_type, exc_value, exc_tb))
     try:
         get_logger().error('未捕获异常:\n%s', tb_str)
-    except Exception:
-        pass
+    except Exception as e:
+        logging.error(f'全局异常处理器写入日志失败: {e}')
     show_error_dialog(f'程序发生未知错误，已记录日志。\n\n{exc_value}', '程序异常')
 
 

@@ -4,6 +4,7 @@ import json
 import os
 import time
 from config import Paths
+from exception import get_logger
 
 
 class DataLogger:
@@ -11,6 +12,7 @@ class DataLogger:
 
     def __init__(self):
         os.makedirs(Paths.HISTORY, exist_ok=True)
+        self._logger = get_logger()
         self._session_id = time.strftime('%Y%m%d_%H%M%S')
         self._buffer: List[Dict] = []
         self._file_path = os.path.join(
@@ -48,8 +50,8 @@ class DataLogger:
             with open(self._file_path, 'w', encoding='utf-8') as f:
                 json.dump(existing, f, ensure_ascii=False)
             self._buffer = []
-        except Exception:
-            pass
+        except Exception as e:
+            self._logger.error(f'写入历史数据失败: {e}', exc_info=True)
 
     def get_sessions(self) -> List[Dict]:
         """返回所有历史会话信息"""
@@ -64,11 +66,12 @@ class DataLogger:
                             '%Y-%m-%d %H:%M:%S',
                             time.strptime(ts, '%Y%m%d_%H%M%S')
                         )
-                    except Exception:
+                    except ValueError as e:
+                        self._logger.warning(f'历史文件名时间解析失败 [{ts}]: {e}')
                         display = ts
                     sessions.append({'file': path, 'time': display, 'id': ts})
-        except Exception:
-            pass
+        except OSError as e:
+            self._logger.error(f'读取历史目录失败: {e}', exc_info=True)
         return sessions
 
     def load_session(self, file_path: str) -> List[Dict]:
@@ -76,5 +79,6 @@ class DataLogger:
         try:
             with open(file_path, 'r', encoding='utf-8') as f:
                 return json.load(f)
-        except Exception:
+        except (OSError, json.JSONDecodeError) as e:
+            self._logger.error(f'加载历史记录失败 [{file_path}]: {e}', exc_info=True)
             return []

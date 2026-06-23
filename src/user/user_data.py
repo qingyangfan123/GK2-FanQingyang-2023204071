@@ -1,6 +1,7 @@
 """用户数据持久化（JSON + 简单加密）"""
 from typing import Optional
 import json
+import logging
 import os
 import hashlib
 from config import Paths, UserRole
@@ -40,7 +41,8 @@ class UserDataManager:
         try:
             with open(self.path, 'r', encoding='utf-8') as f:
                 return json.load(f)
-        except Exception:
+        except (OSError, json.JSONDecodeError) as e:
+            logging.warning(f'读取用户数据失败，使用默认用户: {e}')
             return dict(DEFAULT_USERS)
 
     def _write(self, data: dict) -> None:
